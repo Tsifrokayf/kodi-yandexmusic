@@ -1,0 +1,27 @@
+<addons>
+<addon id="plugin.audio.yandexmusic" name="Яндекс Музыка" version="0.1.2" provider-name="Tsifrokayf">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="default.py">
+    <provides>audio</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="ru_RU">Яндекс Музыка: моя музыка, поиск, чарты и радио</summary>
+    <summary lang="en_GB">Yandex Music: library, search, charts and radio</summary>
+    <description lang="ru_RU">Неофициальный плагин Яндекс Музыки для Kodi. Вход по коду устройства, «Мне нравится», плейлисты, альбомы и исполнители, поиск, главная страница, чарты, новинки, радио (станции, «настроить на треке/исполнителе»), лайки и добавление треков в плейлисты.</description>
+    <description lang="en_GB">Unofficial Yandex Music plugin for Kodi. Device-code login, liked items, playlists, albums and artists, search, home page, charts, new releases, radio (stations, tune to track/artist), likes and adding tracks to playlists.</description>
+    <disclaimer lang="ru_RU">Неофициальный плагин. Использует неофициальный API Яндекс Музыки. Для полноценного прослушивания требуется подписка Яндекс Плюс (без неё доступны короткие превью).</disclaimer>
+    <disclaimer lang="en_GB">Unofficial plugin using the unofficial Yandex Music API. Full playback requires Yandex Plus (otherwise only short previews are available).</disclaimer>
+    <platform>all</platform>
+    <license>GPL-2.0-or-later</license>
+    <language>ru</language>
+    <assets>
+      <icon>icon.png</icon>
+      <fanart>fanart.jpg</fanart>
+    </assets>
+    <news>0.1.0 (2026-09-29)
+- Первая версия: вход по коду, моя музыка, поиск, главная, чарты, новинки, радио, лайки, плейлисты.</news>
+  </extension>
+</addon>
+</addons>

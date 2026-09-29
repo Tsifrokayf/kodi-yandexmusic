@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="repository.tsifrokayf" name="Tsifrokayf Repository" version="1.0.0" provider-name="Tsifrokayf">
+  <extension point="xbmc.addon.repository">
+    <dir>
+      <info compressed="false">https://tsifrokayf.github.io/kodi-yandexmusic/addons.xml</info>
+      <checksum verify="sha256">https://tsifrokayf.github.io/kodi-yandexmusic/addons.xml.sha256</checksum>
+      <datadir zip="true">https://tsifrokayf.github.io/kodi-yandexmusic/</datadir>
+    </dir>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="ru_RU">Репозиторий Tsifrokayf (GitHub Pages)</summary>
+    <summary lang="en_GB">Tsifrokayf repository (GitHub Pages)</summary>
+    <description lang="ru_RU">Репозиторий для установки и обновления плагина «Яндекс Музыка» с GitHub Pages.</description>
+    <description lang="en_GB">Repository for installing and updating the Yandex Music plugin from GitHub Pages.</description>
+    <platform>all</platform>
+    <license>GPL-2.0-or-later</license>
+    <source>https://github.com/Tsifrokayf/kodi-yandexmusic</source>
+  </extension>
+</addon>

@@ -1,0 +1,282 @@
+# Kodi Media Center language file
+# Addon Name: Yandex Music
+# Addon id: plugin.audio.yandexmusic
+msgid ""
+msgstr ""
+"Project-Id-Version: plugin.audio.yandexmusic\n"
+"Language: en_GB\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30001"
+msgid "Home"
+msgstr "Home"
+
+msgctxt "#30002"
+msgid "My music"
+msgstr "My music"
+
+msgctxt "#30003"
+msgid "Search"
+msgstr "Search"
+
+msgctxt "#30004"
+msgid "Radio"
+msgstr "Radio"
+
+msgctxt "#30005"
+msgid "Account"
+msgstr "Account"
+
+msgctxt "#30006"
+msgid "Settings"
+msgstr "Settings"
+
+msgctxt "#30010"
+msgid "Yandex Music login"
+msgstr "Yandex Music login"
+
+msgctxt "#30011"
+msgid "Open %s and enter the code:%s"
+msgstr "Open %s and enter the code:%s"
+
+msgctxt "#30012"
+msgid "Waiting for confirmation... Press Cancel to abort."
+msgstr "Waiting for confirmation... Cancel to abort."
+
+msgctxt "#30013"
+msgid "Login successful"
+msgstr "Login successful"
+
+msgctxt "#30014"
+msgid "Login cancelled"
+msgstr "Login cancelled"
+
+msgctxt "#30015"
+msgid "Login error"
+msgstr "Login error"
+
+msgctxt "#30016"
+msgid "Log out"
+msgstr "Log out"
+
+msgctxt "#30017"
+msgid "Log out of Yandex Music?"
+msgstr "Log out of Yandex Music?"
+
+msgctxt "#30018"
+msgid "Logged out"
+msgstr "Logged out"
+
+msgctxt "#30019"
+msgid "You need to log in first"
+msgstr "You need to log in first"
+
+msgctxt "#30020"
+msgid "Account: %s"
+msgstr "Account: %s"
+
+msgctxt "#30021"
+msgid "Yandex Plus: %s"
+msgstr "Yandex Plus: %s"
+
+msgctxt "#30022"
+msgid "Log in"
+msgstr "Log in"
+
+msgctxt "#30030"
+msgid "Liked tracks"
+msgstr "Liked tracks"
+
+msgctxt "#30031"
+msgid "Tracks"
+msgstr "Tracks"
+
+msgctxt "#30032"
+msgid "Albums"
+msgstr "Albums"
+
+msgctxt "#30033"
+msgid "Artists"
+msgstr "Artists"
+
+msgctxt "#30034"
+msgid "Playlists"
+msgstr "Playlists"
+
+msgctxt "#30035"
+msgid "My playlists"
+msgstr "My playlists"
+
+msgctxt "#30036"
+msgid "Liked playlists"
+msgstr "Liked playlists"
+
+msgctxt "#30040"
+msgid "Chart"
+msgstr "Chart"
+
+msgctxt "#30041"
+msgid "New releases"
+msgstr "New releases"
+
+msgctxt "#30042"
+msgid "New playlists"
+msgstr "New playlists"
+
+msgctxt "#30043"
+msgid "Personal playlists"
+msgstr "Personal playlists"
+
+msgctxt "#30050"
+msgid "Popular"
+msgstr "Popular"
+
+msgctxt "#30051"
+msgid "Discography"
+msgstr "Discography"
+
+msgctxt "#30052"
+msgid "Similar artists"
+msgstr "Similar artists"
+
+msgctxt "#30060"
+msgid "Stations"
+msgstr "Stations"
+
+msgctxt "#30061"
+msgid "Tune to this track"
+msgstr "Tune to this track"
+
+msgctxt "#30062"
+msgid "Tune to this artist"
+msgstr "Tune to this artist"
+
+msgctxt "#30070"
+msgid "Search tracks"
+msgstr "Search tracks"
+
+msgctxt "#30071"
+msgid "Search albums"
+msgstr "Search albums"
+
+msgctxt "#30072"
+msgid "Search artists"
+msgstr "Search artists"
+
+msgctxt "#30073"
+msgid "Search playlists"
+msgstr "Search playlists"
+
+msgctxt "#30074"
+msgid "Enter search query"
+msgstr "Enter search query"
+
+msgctxt "#30080"
+msgid "Add to liked"
+msgstr "Add to liked"
+
+msgctxt "#30081"
+msgid "Remove from liked"
+msgstr "Remove from liked"
+
+msgctxt "#30082"
+msgid "Add to playlist"
+msgstr "Add to playlist"
+
+msgctxt "#30083"
+msgid "Added to playlist"
+msgstr "Added to playlist"
+
+msgctxt "#30084"
+msgid "Choose a playlist"
+msgstr "Choose a playlist"
+
+msgctxt "#30085"
+msgid "Go to album"
+msgstr "Go to album"
+
+msgctxt "#30086"
+msgid "Go to artist"
+msgstr "Go to artist"
+
+msgctxt "#30090"
+msgid "Error"
+msgstr "Error"
+
+msgctxt "#30091"
+msgid "This track is not available"
+msgstr "This track is not available"
+
+msgctxt "#30092"
+msgid "Nothing found"
+msgstr "Nothing found"
+
+msgctxt "#30093"
+msgid "Next page"
+msgstr "Next page"
+
+msgctxt "#30094"
+msgid "New search"
+msgstr "New search"
+
+msgctxt "#30095"
+msgid "Update"
+msgstr "Update"
+
+msgctxt "#30096"
+msgid "Yes"
+msgstr "Yes"
+
+msgctxt "#30097"
+msgid "No"
+msgstr "No"
+
+msgctxt "#30098"
+msgid "Player"
+msgstr "Player"
+
+msgctxt "#30099"
+msgid "Nothing is playing"
+msgstr "Nothing is playing"
+
+msgctxt "#30200"
+msgid "General"
+msgstr "General"
+
+msgctxt "#30201"
+msgid "Options"
+msgstr "Options"
+
+msgctxt "#30202"
+msgid "OAuth token (manual)"
+msgstr "OAuth token (manual)"
+
+msgctxt "#30203"
+msgid "If set, it is used instead of device-code login"
+msgstr "If set, it is used instead of device-code login"
+
+msgctxt "#30210"
+msgid "Preferred codec"
+msgstr "Preferred codec"
+
+msgctxt "#30211"
+msgid "Audio stream format"
+msgstr "Audio stream format"
+
+msgctxt "#30212"
+msgid "MP3"
+msgstr "MP3"
+
+msgctxt "#30213"
+msgid "AAC"
+msgstr "AAC"
+
+msgctxt "#30220"
+msgid "Cache lifetime (minutes)"
+msgstr "Cache lifetime (minutes)"
+
+msgctxt "#30221"
+msgid "How long to keep home page, chart and search data"
+msgstr "How long to keep home page, chart and search data"

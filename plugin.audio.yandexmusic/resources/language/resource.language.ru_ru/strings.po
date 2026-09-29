@@ -1,0 +1,282 @@
+# Kodi Media Center language file
+# Addon Name: Яндекс Музыка
+# Addon id: plugin.audio.yandexmusic
+msgid ""
+msgstr ""
+"Project-Id-Version: plugin.audio.yandexmusic\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgctxt "#30001"
+msgid "Home"
+msgstr "Главная"
+
+msgctxt "#30002"
+msgid "My music"
+msgstr "Моя музыка"
+
+msgctxt "#30003"
+msgid "Search"
+msgstr "Поиск"
+
+msgctxt "#30004"
+msgid "Radio"
+msgstr "Радио"
+
+msgctxt "#30005"
+msgid "Account"
+msgstr "Аккаунт"
+
+msgctxt "#30006"
+msgid "Settings"
+msgstr "Настройки"
+
+msgctxt "#30010"
+msgid "Yandex Music login"
+msgstr "Вход в Яндекс Музыку"
+
+msgctxt "#30011"
+msgid "Open %s and enter the code:%s"
+msgstr "Откройте %s и введите код:%s"
+
+msgctxt "#30012"
+msgid "Waiting for confirmation... Press Cancel to abort."
+msgstr "Ожидание подтверждения... Esc — отмена."
+
+msgctxt "#30013"
+msgid "Login successful"
+msgstr "Вход выполнен"
+
+msgctxt "#30014"
+msgid "Login cancelled"
+msgstr "Вход отменён"
+
+msgctxt "#30015"
+msgid "Login error"
+msgstr "Ошибка входа"
+
+msgctxt "#30016"
+msgid "Log out"
+msgstr "Выйти из аккаунта"
+
+msgctxt "#30017"
+msgid "Log out of Yandex Music?"
+msgstr "Выйти из Яндекс Музыки?"
+
+msgctxt "#30018"
+msgid "Logged out"
+msgstr "Вы вышли из аккаунта"
+
+msgctxt "#30019"
+msgid "You need to log in first"
+msgstr "Сначала необходимо войти"
+
+msgctxt "#30020"
+msgid "Account: %s"
+msgstr "Аккаунт: %s"
+
+msgctxt "#30021"
+msgid "Yandex Plus: %s"
+msgstr "Яндекс Плюс: %s"
+
+msgctxt "#30022"
+msgid "Log in"
+msgstr "Войти"
+
+msgctxt "#30030"
+msgid "Liked tracks"
+msgstr "Понравившиеся треки"
+
+msgctxt "#30031"
+msgid "Tracks"
+msgstr "Треки"
+
+msgctxt "#30032"
+msgid "Albums"
+msgstr "Альбомы"
+
+msgctxt "#30033"
+msgid "Artists"
+msgstr "Исполнители"
+
+msgctxt "#30034"
+msgid "Playlists"
+msgstr "Плейлисты"
+
+msgctxt "#30035"
+msgid "My playlists"
+msgstr "Мои плейлисты"
+
+msgctxt "#30036"
+msgid "Liked playlists"
+msgstr "Понравившиеся плейлисты"
+
+msgctxt "#30040"
+msgid "Chart"
+msgstr "Чарт"
+
+msgctxt "#30041"
+msgid "New releases"
+msgstr "Новинки"
+
+msgctxt "#30042"
+msgid "New playlists"
+msgstr "Новые плейлисты"
+
+msgctxt "#30043"
+msgid "Personal playlists"
+msgstr "Персональные плейлисты"
+
+msgctxt "#30050"
+msgid "Popular"
+msgstr "Популярное"
+
+msgctxt "#30051"
+msgid "Discography"
+msgstr "Дискография"
+
+msgctxt "#30052"
+msgid "Similar artists"
+msgstr "Похожие исполнители"
+
+msgctxt "#30060"
+msgid "Stations"
+msgstr "Станции"
+
+msgctxt "#30061"
+msgid "Tune to this track"
+msgstr "Настроить на этом треке"
+
+msgctxt "#30062"
+msgid "Tune to this artist"
+msgstr "Настроить на этом исполнителе"
+
+msgctxt "#30070"
+msgid "Search tracks"
+msgstr "Поиск треков"
+
+msgctxt "#30071"
+msgid "Search albums"
+msgstr "Поиск альбомов"
+
+msgctxt "#30072"
+msgid "Search artists"
+msgstr "Поиск исполнителей"
+
+msgctxt "#30073"
+msgid "Search playlists"
+msgstr "Поиск плейлистов"
+
+msgctxt "#30074"
+msgid "Enter search query"
+msgstr "Введите запрос"
+
+msgctxt "#30080"
+msgid "Add to liked"
+msgstr "В «Мне нравится»"
+
+msgctxt "#30081"
+msgid "Remove from liked"
+msgstr "Убрать из «Мне нравится»"
+
+msgctxt "#30082"
+msgid "Add to playlist"
+msgstr "Добавить в плейлист"
+
+msgctxt "#30083"
+msgid "Added to playlist"
+msgstr "Добавлено в плейлист"
+
+msgctxt "#30084"
+msgid "Choose a playlist"
+msgstr "Выберите плейлист"
+
+msgctxt "#30085"
+msgid "Go to album"
+msgstr "К альбому"
+
+msgctxt "#30086"
+msgid "Go to artist"
+msgstr "К исполнителю"
+
+msgctxt "#30090"
+msgid "Error"
+msgstr "Ошибка"
+
+msgctxt "#30091"
+msgid "This track is not available"
+msgstr "Этот трек недоступен"
+
+msgctxt "#30092"
+msgid "Nothing found"
+msgstr "Ничего не найдено"
+
+msgctxt "#30093"
+msgid "Next page"
+msgstr "Следующая страница"
+
+msgctxt "#30094"
+msgid "New search"
+msgstr "Новый поиск"
+
+msgctxt "#30095"
+msgid "Update"
+msgstr "Обновить"
+
+msgctxt "#30096"
+msgid "Yes"
+msgstr "Да"
+
+msgctxt "#30097"
+msgid "No"
+msgstr "Нет"
+
+msgctxt "#30098"
+msgid "Player"
+msgstr "Плеер"
+
+msgctxt "#30099"
+msgid "Nothing is playing"
+msgstr "Ничего не воспроизводится"
+
+msgctxt "#30200"
+msgid "General"
+msgstr "Основные"
+
+msgctxt "#30201"
+msgid "Options"
+msgstr "Параметры"
+
+msgctxt "#30202"
+msgid "OAuth token (manual)"
+msgstr "OAuth-токен (вручную)"
+
+msgctxt "#30203"
+msgid "If set, it is used instead of device-code login"
+msgstr "Если указан, используется вместо входа по коду"
+
+msgctxt "#30210"
+msgid "Preferred codec"
+msgstr "Предпочитаемый кодек"
+
+msgctxt "#30211"
+msgid "Audio stream format"
+msgstr "Формат аудиопотока"
+
+msgctxt "#30212"
+msgid "MP3"
+msgstr "MP3"
+
+msgctxt "#30213"
+msgid "AAC"
+msgstr "AAC"
+
+msgctxt "#30220"
+msgid "Cache lifetime (minutes)"
+msgstr "Время кэша (минуты)"
+
+msgctxt "#30221"
+msgid "How long to keep home page, chart and search data"
+msgstr "Как долго хранить данные главной страницы, чарта и поиска"
