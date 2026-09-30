@@ -550,6 +550,11 @@ def lyrics(ctx, params):
 
 
 def karaoke_view(ctx, params):
+    # End the directory request right away: the overlay keeps this script
+    # alive for the whole track, and a pending GetDirectory shows a busy
+    # spinner on top of the lyrics.
+    if ctx.handle >= 0:
+        _finish(ctx)
     state = player.read_play_state(ctx) or {}
     track_id = params.get('track') or state.get('track') or ''
     if not track_id:

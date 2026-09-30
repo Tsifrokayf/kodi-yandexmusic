@@ -10,9 +10,13 @@ log = logging.getLogger(__name__)
 CLOSE_ACTIONS = {10, 13, 92}  # previous menu, stop, nav back
 
 
-class KaraokeOverlay(xbmcgui.Window):
+class KaraokeOverlay(xbmcgui.WindowDialog):
+    def __new__(cls, *args, **kwargs):
+        # SWIG __new__ rejects constructor arguments.
+        return super().__new__(cls)
+
     def __init__(self, title, entries, hint=''):
-        xbmcgui.Window.__init__(self)
+        xbmcgui.WindowDialog.__init__(self)
         self._entries = list(entries)
         self._alive = True
         width = self.getWidth() or 1280
@@ -58,6 +62,11 @@ class KaraokeOverlay(xbmcgui.Window):
     def run(self, monitor, player):
         """Drive the overlay until stopped, track end, Kodi shutdown or close."""
         self.render(-1)
+        try:
+            self.show()
+        except RuntimeError:
+            log.debug('karaoke show failed', exc_info=True)
+            return
         last = None
         while self._alive and not monitor.abortRequested():
             monitor.waitForAbort(0.25)

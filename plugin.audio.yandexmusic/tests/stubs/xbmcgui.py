@@ -102,6 +102,11 @@ class Window(object):
         pass
 
 
+class WindowDialog(Window):
+    def __init__(self, *args):
+        Window.__init__(self, *args)
+
+
 class DialogProgress(object):
     def create(self, heading, message=''):
         self._canceled = False
