@@ -36,6 +36,11 @@
             <heading>30220</heading>
           </control>
         </setting>
+        <setting id="preload_track" type="bool" label="30100" help="30102">
+          <level>1</level>
+          <default>true</default>
+          <control type="toggle"/>
+        </setting>
       </group>
     </category>
   </section>

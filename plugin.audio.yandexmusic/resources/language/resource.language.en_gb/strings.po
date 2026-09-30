@@ -241,6 +241,18 @@ msgctxt "#30099"
 msgid "Nothing is playing"
 msgstr "Nothing is playing"
 
+msgctxt "#30100"
+msgid "Preload track before playing"
+msgstr "Preload track before playing"
+
+msgctxt "#30101"
+msgid "Downloading track"
+msgstr "Downloading track"
+
+msgctxt "#30102"
+msgid "Download the whole track with a progress bar (like Yandex Music), then play from cache"
+msgstr "Download the whole track with a progress bar (like Yandex Music), then play from cache"
+
 msgctxt "#30200"
 msgid "General"
 msgstr "General"

@@ -241,6 +241,18 @@ msgctxt "#30099"
 msgid "Nothing is playing"
 msgstr "Ничего не воспроизводится"
 
+msgctxt "#30100"
+msgid "Preload track before playing"
+msgstr "Предзагрузка трека перед воспроизведением"
+
+msgctxt "#30101"
+msgid "Downloading track"
+msgstr "Загрузка трека"
+
+msgctxt "#30102"
+msgid "Download the whole track with a progress bar (like Yandex Music), then play from cache"
+msgstr "Скачивает трек целиком с полосой прогресса (как в Яндекс Музыке), затем воспроизводит из кэша"
+
 msgctxt "#30200"
 msgid "General"
 msgstr "Основные"
