@@ -26,7 +26,8 @@ class RouterSmokeTest(unittest.TestCase):
 
     def test_root(self):
         self.assertEqual(self.actions(''),
-                         ['player', 'home', 'my', 'search', 'radio', 'account', 'settings'])
+                         ['player', 'home', 'my', 'search', 'radio', 'wave',
+                          'account', 'settings'])
 
     def test_home(self):
         self.assertEqual(self.actions('?action=home'),
@@ -49,7 +50,8 @@ class RouterSmokeTest(unittest.TestCase):
 
     def test_unknown_action_falls_back_to_root(self):
         self.assertEqual(self.actions('?action=bogus'),
-                         ['player', 'home', 'my', 'search', 'radio', 'account', 'settings'])
+                         ['player', 'home', 'my', 'search', 'radio', 'wave',
+                          'account', 'settings'])
 
     def test_player_window_opens_visualisation(self):
         import xbmc

@@ -242,16 +242,36 @@ msgid "Nothing is playing"
 msgstr "Nothing is playing"
 
 msgctxt "#30100"
-msgid "Preload track before playing"
-msgstr "Preload track before playing"
-
-msgctxt "#30101"
-msgid "Downloading track"
-msgstr "Downloading track"
+msgid "Cache tracks in background"
+msgstr "Cache tracks in background"
 
 msgctxt "#30102"
-msgid "Download the whole track with a progress bar (like Yandex Music), then play from cache"
-msgstr "Download the whole track with a progress bar (like Yandex Music), then play from cache"
+msgid "The player starts streaming right away; the track is downloaded to the cache in the background so replays start instantly"
+msgstr "The player starts streaming right away; the track is downloaded to the cache in the background so replays start instantly"
+
+msgctxt "#30103"
+msgid "My Wave"
+msgstr "My Wave"
+
+msgctxt "#30104"
+msgid "Lyrics"
+msgstr "Lyrics"
+
+msgctxt "#30105"
+msgid "Karaoke"
+msgstr "Karaoke"
+
+msgctxt "#30106"
+msgid "Lyrics not available for this track"
+msgstr "Lyrics not available for this track"
+
+msgctxt "#30107"
+msgid "Start a track first to show karaoke"
+msgstr "Start a track first to show karaoke"
+
+msgctxt "#30108"
+msgid "ESC closes karaoke"
+msgstr "ESC closes karaoke"
 
 msgctxt "#30200"
 msgid "General"

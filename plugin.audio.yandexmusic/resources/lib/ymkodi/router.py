@@ -8,7 +8,7 @@ import xbmcgui
 import xbmcplugin
 import xbmcvfs
 
-from . import auth, player, ui
+from . import auth, karaoke, lyrics as lyrics_mod, player, ui
 from .api import YandexMusicService
 from .cache import Cache
 from .store import SessionStore
@@ -115,6 +115,8 @@ def _track_menu(ctx, track, liked_keys):
     if track.artists:
         menu.append((ctx.L(30062),
                      build_url(ctx.base_url, 'station', station='artist:{0}'.format(track.artists[0].id))))
+    menu.append((ctx.L(30104), build_url(ctx.base_url, 'lyrics', track=full_id)))
+    menu.append((ctx.L(30105), build_url(ctx.base_url, 'karaoke', track=full_id)))
     return menu
 
 
@@ -179,6 +181,7 @@ def root(ctx, params):
     ui.add_folder(ctx, ctx.L(30002), 'my')
     ui.add_folder(ctx, ctx.L(30003), 'search')
     ui.add_folder(ctx, ctx.L(30004), 'radio')
+    ui.add_folder(ctx, ctx.L(30103), 'wave')
     ui.add_folder(ctx, ctx.L(30005), 'account')
     ui.add_folder(ctx, ctx.L(30006), 'settings')
     _finish(ctx)
@@ -196,7 +199,11 @@ def player_window(ctx, params):
             ui.notify(ctx, '', ctx.L(30099), sound=False)
     except Exception:
         log.exception('cannot open player window')
-    # fallback item so closing the player never lands on an empty folder
+    # fallback items so closing the player never lands on an empty folder
+    state = player.read_play_state(ctx)
+    if state and state.get('track'):
+        ui.add_folder(ctx, ctx.L(30104), 'lyrics', {'track': state['track']})
+        ui.add_folder(ctx, ctx.L(30105), 'karaoke', {'track': state['track']})
     ui.add_folder(ctx, ctx.L(30001), 'home')
     _finish(ctx)
 
@@ -463,6 +470,66 @@ def play(ctx, params):
     player.play(ctx, params)
 
 
+def wave(ctx, params):
+    _meta, tracks = ctx.service.wave_session()
+    if not tracks:
+        _empty_notice(ctx)
+        _finish(ctx)
+        return
+    _add_tracks(ctx, tracks, _liked_track_keys(ctx))
+    ui.add_folder(ctx, ctx.L(30095), 'wave')
+    _finish(ctx, 'songs')
+
+
+def lyrics(ctx, params):
+    track_id = params.get('track') or ''
+    if not track_id:
+        return
+    text = ctx.service.track_lyrics(track_id, 'TEXT')
+    if not text:
+        lrc = ctx.service.track_lyrics(track_id, 'LRC')
+        text = lyrics_mod.plain_from_lrc(lrc) if lrc else ''
+    if not text:
+        ui.notify(ctx, '', ctx.L(30106), sound=False)
+        return
+    xbmcgui.Dialog().textviewer(ctx.L(30104), text)
+
+
+def karaoke_view(ctx, params):
+    state = player.read_play_state(ctx) or {}
+    track_id = params.get('track') or state.get('track') or ''
+    if not track_id:
+        ui.notify(ctx, '', ctx.L(30107), sound=False)
+        return
+    lrc = ctx.service.track_lyrics(track_id, 'LRC')
+    entries = lyrics_mod.parse_lrc(lrc) if lrc else []
+    if not entries:
+        text = ctx.service.track_lyrics(track_id, 'TEXT')
+        if text:
+            xbmcgui.Dialog().textviewer(ctx.L(30104), text)
+        else:
+            ui.notify(ctx, '', ctx.L(30106), sound=False)
+        return
+    media = xbmc.Player()
+    if not media.isPlaying():
+        xbmc.executebuiltin('PlayMedia({0})'.format(
+            build_url(ctx.base_url, 'play', track=track_id)))
+        monitor = xbmc.Monitor()
+        for _attempt in range(24):
+            if monitor.waitForAbort(0.25) or media.isPlaying():
+                break
+        if not media.isPlaying():
+            ui.notify(ctx, '', ctx.L(30107), sound=False)
+            return
+    title = ''
+    if state.get('track') == track_id:
+        artists = state.get('artists') or ''
+        track_title = state.get('title') or ''
+        title = '{0} — {1}'.format(artists, track_title) if artists else track_title
+    overlay = karaoke.KaraokeOverlay(title, entries, ctx.L(30108))
+    overlay.run(xbmc.Monitor(), media)
+
+
 def like(ctx, params):
     track_id = params.get('track')
     action = ctx.service.toggle_like_track(track_id)
@@ -613,6 +680,10 @@ ACTIONS = {
     'radio': radio,
     'station': station,
     'play': play,
+    'preload_bg': player.preload_bg,
+    'wave': wave,
+    'lyrics': lyrics,
+    'karaoke': karaoke_view,
     'like': like,
     'like_album': like_album,
     'like_artist': like_artist,

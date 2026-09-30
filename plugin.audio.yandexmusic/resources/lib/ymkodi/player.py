@@ -1,14 +1,47 @@
 """Playback: resolve direct stream URL and hand it to Kodi."""
+import json
 import logging
+import os
 
+import xbmc
 import xbmcplugin
 
 from . import audiocache
 from .api import StreamError
 from .auth import NotAuthorized
 from .ui import notify, track_artists, track_listitem
+from .urls import build_url
 
 log = logging.getLogger(__name__)
+
+PLAY_STATE_FILE = 'play_state.json'
+
+
+def save_play_state(ctx, track_id, track):
+    """Remember the last started track (used by karaoke/lyrics shortcuts)."""
+    artists = track_artists(track)
+    state = {
+        'track': track_id,
+        'title': getattr(track, 'title', None) or '',
+        'artists': artists,
+    }
+    try:
+        with open(os.path.join(ctx.profile, PLAY_STATE_FILE), 'w', encoding='utf-8') as handle:
+            json.dump(state, handle, ensure_ascii=False)
+    except OSError:
+        log.debug('cannot persist play state', exc_info=True)
+
+
+def read_play_state(ctx):
+    """Last started track state or None."""
+    try:
+        with open(os.path.join(ctx.profile, PLAY_STATE_FILE), encoding='utf-8') as handle:
+            state = json.load(handle)
+    except (OSError, ValueError):
+        return None
+    if isinstance(state, dict) and state.get('track'):
+        return state
+    return None
 
 
 def play(ctx, params):
@@ -36,28 +69,31 @@ def play(ctx, params):
         return
 
     path = None
+    save_play_state(ctx, track_id, track)
     if not station and ctx.addon.getSetting('preload_track') != 'false':
-        path = _preload_with_dialog(ctx, url, track_id, track)
+        cached = audiocache.cached_path(ctx.profile, track_id)
+        if audiocache.is_fresh(cached):
+            path = cached
+        else:
+            xbmc.executebuiltin('RunPlugin({0})'.format(
+                build_url(ctx.base_url, 'preload_bg', track=track_id)))
 
     li = track_listitem(track)
     li.setPath(path or url)
     xbmcplugin.setResolvedUrl(ctx.handle, True, li)
 
 
-def _preload_with_dialog(ctx, url, track_id, track):
-    import xbmcgui
-    title = getattr(track, 'title', None) or track_id
-    artists = track_artists(track)
-    label = '{0} — {1}'.format(artists, title) if artists else title
-    dialog = xbmcgui.DialogProgress()
-    dialog.create(ctx.L(30101), label)
+def preload_bg(ctx, params):
+    """Background cache download (started via RunPlugin, no UI)."""
+    track_id = params.get('track') or ''
+    if not track_id:
+        return
     try:
-        return audiocache.preload_track(
-            ctx.profile, url, track_id,
-            on_progress=lambda percent: dialog.update(percent),
-            should_cancel=lambda: dialog.iscanceled())
-    finally:
-        dialog.close()
+        url, _track = ctx.service.resolve_stream(track_id)
+    except Exception:
+        log.info('background preload resolve failed for %s', track_id, exc_info=True)
+        return
+    audiocache.preload_track(ctx.profile, url, track_id)
 
 
 def track_placeholder():

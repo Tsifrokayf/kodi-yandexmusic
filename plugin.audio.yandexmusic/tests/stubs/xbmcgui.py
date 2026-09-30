@@ -58,6 +58,49 @@ class Dialog(object):
     def select(self, heading, options):
         return -1
 
+    def textviewer(self, heading, text):
+        return None
+
+
+class ControlLabel(object):
+    def __init__(self, x, y, width, height, label='', **kwargs):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.label = label
+        self.kwargs = kwargs
+
+    def setLabel(self, label):
+        self.label = label
+
+    def getLabel(self):
+        return self.label
+
+
+class Window(object):
+    def __init__(self, *args):
+        self._controls = []
+        self._closed = False
+
+    def getWidth(self):
+        return 1280
+
+    def getHeight(self):
+        return 720
+
+    def addControl(self, control):
+        self._controls.append(control)
+
+    def close(self):
+        self._closed = True
+
+    def show(self):
+        pass
+
+    def doModal(self):
+        pass
+
 
 class DialogProgress(object):
     def create(self, heading, message=''):

@@ -2,7 +2,7 @@ import unittest
 
 import _bootstrap  # noqa: F401
 
-from ymkodi.api import pick_download_info, split_track_id, extract_playlists
+from ymkodi.api import pick_download_info, split_track_id, extract_playlists, parse_wave_result
 
 
 class FakeDownloadInfo(object):
@@ -65,6 +65,30 @@ class ExtractPlaylistsTest(unittest.TestCase):
 
     def test_bare_list(self):
         self.assertEqual(extract_playlists([1, 2]), [1, 2])
+
+
+class ParseWaveResultTest(unittest.TestCase):
+    def test_sequence_becomes_tracks(self):
+        result = {
+            'radioSessionId': 'rs-1',
+            'batchId': 'b-1',
+            'sequence': [
+                {'track': {'id': 11, 'title': 'One',
+                           'artists': [{'id': 1, 'name': 'A'}], 'albums': []}},
+                {'track': {'id': 12, 'title': 'Two',
+                           'artists': [{'id': 1, 'name': 'A'}], 'albums': []}},
+            ],
+        }
+        tracks = parse_wave_result(result, None)
+        self.assertEqual(len(tracks), 2)
+        self.assertEqual(tracks[0].title, 'One')
+        self.assertEqual(tracks[1].id, 12)
+
+    def test_missing_or_malformed(self):
+        self.assertEqual(parse_wave_result(None, None), [])
+        self.assertEqual(parse_wave_result([], None), [])
+        self.assertEqual(parse_wave_result({'sequence': [None, 'x', {}]}, None), [])
+        self.assertEqual(parse_wave_result({'sequence': [{'track': None}]}, None), [])
 
 
 if __name__ == '__main__':

@@ -10,6 +10,7 @@ from yandex_music import (
     Playlist,
     Search,
     StationResult,
+    Track,
 )
 from yandex_music.exceptions import UnauthorizedError, YandexMusicError
 
@@ -46,6 +47,20 @@ def split_track_id(track_id):
         track_only, _, album_id = text.partition(':')
         return track_only, album_id or None
     return text, None
+
+
+def parse_wave_result(result, client):
+    """Tracks from POST /rotor/session/new (My Wave) as a list of Track."""
+    if not isinstance(result, dict):
+        return []
+    tracks = []
+    for item in result.get('sequence') or ():
+        if not isinstance(item, dict):
+            continue
+        track = Track.de_json(item.get('track'), client)
+        if track is not None:
+            tracks.append(track)
+    return tracks
 
 
 def extract_playlists(result):
@@ -413,6 +428,56 @@ class YandexMusicService(object):
         except YandexMusicError:
             log.debug('trackStarted feedback failed', exc_info=True)
             return False
+
+    # --------------------------------------------------------------- my wave
+
+    def wave_session(self):
+        """Start a My Wave rotor session: POST /rotor/session/new.
+
+        Returns (meta, tracks) where meta carries session/batch ids and
+        tracks is a list of yandex_music.Track. Empty tuple on failure.
+        """
+        client = self.client
+        payload = json.dumps({
+            'includeTracksInResponse': True,
+            'includeWaveModel': True,
+            'interactive': True,
+            'seeds': [],
+        })
+        try:
+            result = client.request.post(
+                '{0}/rotor/session/new'.format(client.base_url),
+                data=payload,
+            )
+        except YandexMusicError:
+            log.warning('my wave session failed', exc_info=True)
+            return None, []
+        if not result:
+            return None, []
+        tracks = parse_wave_result(result, client)
+        meta = {
+            'session': result.get('radioSessionId'),
+            'batch': result.get('batchId'),
+        }
+        return meta, tracks
+
+    def track_lyrics(self, track_id, fmt='TEXT'):
+        """Lyrics text for a track ('TEXT' plain or 'LRC' timed), or None."""
+        plain, _, album_id = str(track_id).partition(':')
+        request_id = plain if album_id else track_id
+        client = self.client
+        try:
+            info = client.tracks_lyrics(request_id, fmt)
+        except YandexMusicError:
+            log.debug('lyrics unavailable for %s', track_id, exc_info=True)
+            return None
+        if info is None:
+            return None
+        try:
+            return info.fetch_lyrics()
+        except YandexMusicError:
+            log.debug('lyrics fetch failed for %s', track_id, exc_info=True)
+            return None
 
     # --------------------------------------------------------------- playback
 

@@ -242,16 +242,36 @@ msgid "Nothing is playing"
 msgstr "Ничего не воспроизводится"
 
 msgctxt "#30100"
-msgid "Preload track before playing"
-msgstr "Предзагрузка трека перед воспроизведением"
-
-msgctxt "#30101"
-msgid "Downloading track"
-msgstr "Загрузка трека"
+msgid "Cache tracks in background"
+msgstr "Кэшировать треки в фоне"
 
 msgctxt "#30102"
-msgid "Download the whole track with a progress bar (like Yandex Music), then play from cache"
-msgstr "Скачивает трек целиком с полосой прогресса (как в Яндекс Музыке), затем воспроизводит из кэша"
+msgid "The player starts streaming right away; the track is downloaded to the cache in the background so replays start instantly"
+msgstr "Плеер стартует сразу с потока; трек параллельно скачивается в кэш — повторы играют мгновенно из кэша"
+
+msgctxt "#30103"
+msgid "My Wave"
+msgstr "Моя волна"
+
+msgctxt "#30104"
+msgid "Lyrics"
+msgstr "Текст песни"
+
+msgctxt "#30105"
+msgid "Karaoke"
+msgstr "Караоке"
+
+msgctxt "#30106"
+msgid "Lyrics not available for this track"
+msgstr "Текст песни недоступен для этого трека"
+
+msgctxt "#30107"
+msgid "Start a track first to show karaoke"
+msgstr "Сначала запустите трек, чтобы показать караоке"
+
+msgctxt "#30108"
+msgid "ESC closes karaoke"
+msgstr "ESC — закрыть караоке"
 
 msgctxt "#30200"
 msgid "General"
