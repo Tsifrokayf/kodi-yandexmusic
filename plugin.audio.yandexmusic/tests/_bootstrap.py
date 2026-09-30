@@ -5,7 +5,7 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LIB = os.path.join(ROOT, 'resources', 'lib')
 VENDOR = os.path.join(LIB, 'vendor')
-STUBS = os.environ.get('YM_TEST_STUBS', '')
+STUBS = os.environ.get('YM_TEST_STUBS', '') or os.path.join(ROOT, 'tests', 'stubs')
 
 for path in (STUBS, VENDOR, LIB):
     if path and path not in sys.path:

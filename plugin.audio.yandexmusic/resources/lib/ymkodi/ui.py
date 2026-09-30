@@ -23,7 +23,7 @@ def image_url(uri, size=400):
     if not text.startswith(('http://', 'https://')):
         text = 'https://' + text
     if '%%' in text:
-        return text.replace('%%', '%%?size={0}x{0}'.format(size), 1)
+        return text.replace('%%', '{0}x{0}'.format(size), 1)
     return text
 
 
