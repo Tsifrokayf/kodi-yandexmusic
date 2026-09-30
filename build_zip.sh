@@ -48,10 +48,11 @@ cp "$OUT" "$REPO_DIR/$NAME/${NAME}-${VERSION}.zip"
 } > "$REPO_DIR/addons.xml"
 shasum -a 256 "$REPO_DIR/addons.xml" | awk '{print $1}' > "$REPO_DIR/addons.xml.sha256"
 
-# publish docs/ to GitHub Pages if this is a git checkout with an origin remote
+# publish to GitHub Pages (docs/ is the Pages root); commit everything so
+# source edits are never left behind in the working tree
 if git -C "$HERE" rev-parse --is-inside-work-tree >/dev/null 2>&1 &&
    git -C "$HERE" remote get-url origin >/dev/null 2>&1; then
-  git -C "$HERE" add -f "$REPO_DIR" "$ADDON_DIR/addon.xml"
+  git -C "$HERE" add -A
   git -C "$HERE" commit -m "Publish $NAME $VERSION" >/dev/null 2>&1 || true
   git -C "$HERE" push origin HEAD >/dev/null 2>&1 ||
     echo "WARN: git push failed ( Pages will be updated on next push )"
