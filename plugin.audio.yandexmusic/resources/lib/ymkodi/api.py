@@ -2,6 +2,8 @@
 import json
 import logging
 import time
+import urllib.error
+import urllib.request
 
 from yandex_music import (
     ChartInfo,
@@ -432,6 +434,20 @@ class YandexMusicService(object):
 
     # --------------------------------------------------------------- my wave
 
+    def _post_json(self, url, payload, timeout=15):
+        """POST JSON with an explicit Content-Type (rotor rejects '')."""
+        headers = dict(getattr(self.client.request, 'headers', None) or {})
+        headers['Content-Type'] = 'application/json'
+        data = json.dumps(payload).encode('utf-8')
+        request = urllib.request.Request(url, data=data, headers=headers)
+        try:
+            with urllib.request.urlopen(request, timeout=timeout) as response:
+                body = json.loads(response.read().decode('utf-8') or '{}')
+        except (urllib.error.URLError, ValueError, OSError):
+            log.debug('json post failed: %s', url, exc_info=True)
+            return None
+        return body.get('result')
+
     def wave_session(self, seeds=None):
         """Start a My Wave rotor session: POST /rotor/session/new.
 
@@ -441,20 +457,15 @@ class YandexMusicService(object):
         tracks is a list of yandex_music.Track. Empty tuple on failure.
         """
         client = self.client
-        payload = json.dumps({
-            'includeTracksInResponse': True,
-            'includeWaveModel': True,
-            'interactive': True,
-            'seeds': list(seeds or []),
-        })
-        try:
-            result = client.request.post(
-                '{0}/rotor/session/new'.format(client.base_url),
-                data=payload,
-            )
-        except YandexMusicError:
-            log.warning('my wave session failed', exc_info=True)
-            return None, []
+        result = self._post_json(
+            '{0}/rotor/session/new'.format(client.base_url),
+            {
+                'includeTracksInResponse': True,
+                'includeWaveModel': True,
+                'interactive': True,
+                'seeds': list(seeds or []),
+            },
+        )
         if not result:
             return None, []
         tracks = parse_wave_result(result, client)
@@ -481,20 +492,15 @@ class YandexMusicService(object):
         }
         if total_played is not None:
             event['totalPlayedSeconds'] = float(total_played)
-        payload = json.dumps({
-            'from': 'web-home-rup_main-radio-default',
-            'batchId': batch_id,
-            'event': event,
-        })
-        try:
-            client.request.post(
-                '{0}/rotor/session/{1}/feedback'.format(client.base_url, wave_session),
-                data=payload,
-            )
-        except YandexMusicError:
-            log.debug('wave feedback %s failed', event_type, exc_info=True)
-            return False
-        return True
+        result = self._post_json(
+            '{0}/rotor/session/{1}/feedback'.format(client.base_url, wave_session),
+            {
+                'from': 'web-home-rup_main-radio-default',
+                'batchId': batch_id,
+                'event': event,
+            },
+        )
+        return result is not None
 
     def wave_track_started(self, wave_session, batch_id, track_id):
         return self.wave_feedback(wave_session, batch_id, 'trackStarted', track_id)
