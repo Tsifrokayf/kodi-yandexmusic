@@ -13,6 +13,7 @@ log = logging.getLogger(__name__)
 CHUNK = 128 * 1024
 MAX_AGE = 7 * 24 * 3600
 MAX_FILES = 40
+MAX_BYTES = 700 * 1024 * 1024
 USER_AGENT = 'Mozilla/5.0 (Kodi yandexmusic plugin)'
 
 
@@ -57,14 +58,20 @@ def _cleanup(path):
             st = os.stat(full)
         except OSError:
             continue
-        entries.append((st.st_mtime, full))
+        entries.append((st.st_mtime, full, st.st_size))
     now = time.time()
-    for mtime, full in entries:
+    fresh = []
+    for mtime, full, size in entries:
         if now - mtime > MAX_AGE:
             _remove(full)
-    entries.sort(reverse=True)
-    for _, full in entries[MAX_FILES:]:
-        _remove(full)
+        else:
+            fresh.append((mtime, full, size))
+    fresh.sort(reverse=True)
+    total = 0
+    for index, (_mtime, full, size) in enumerate(fresh):
+        total += size
+        if index >= MAX_FILES or total > MAX_BYTES:
+            _remove(full)
 
 
 def fetch(url, dest, on_progress=None, should_cancel=None):

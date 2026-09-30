@@ -1,6 +1,7 @@
 """Yandex Music API service layer: caching, stream resolution, library ops."""
 import json
 import logging
+import time
 
 from yandex_music import (
     ChartInfo,
@@ -431,9 +432,11 @@ class YandexMusicService(object):
 
     # --------------------------------------------------------------- my wave
 
-    def wave_session(self):
+    def wave_session(self, seeds=None):
         """Start a My Wave rotor session: POST /rotor/session/new.
 
+        `seeds` are wave variations ('track:ID', 'artist:ID', 'album:ID',
+        'genre:rock', ...); empty/None starts the plain personal wave.
         Returns (meta, tracks) where meta carries session/batch ids and
         tracks is a list of yandex_music.Track. Empty tuple on failure.
         """
@@ -442,7 +445,7 @@ class YandexMusicService(object):
             'includeTracksInResponse': True,
             'includeWaveModel': True,
             'interactive': True,
-            'seeds': [],
+            'seeds': list(seeds or []),
         })
         try:
             result = client.request.post(
@@ -460,6 +463,41 @@ class YandexMusicService(object):
             'batch': result.get('batchId'),
         }
         return meta, tracks
+
+    def wave_feedback(self, wave_session, batch_id, event_type, track_id,
+                      total_played=None, track_length=0.0):
+        """Send a My Wave session feedback event (like/unlike/skip/trackStarted).
+
+        Returns True when the server accepted the event.
+        """
+        if not wave_session or not batch_id or not track_id:
+            return False
+        client = self.client
+        event = {
+            'timestamp': int(time.time() * 1000),
+            'type': event_type,
+            'trackLengthSeconds': float(track_length or 0.0),
+            'trackId': str(track_id),
+        }
+        if total_played is not None:
+            event['totalPlayedSeconds'] = float(total_played)
+        payload = json.dumps({
+            'from': 'web-home-rup_main-radio-default',
+            'batchId': batch_id,
+            'event': event,
+        })
+        try:
+            client.request.post(
+                '{0}/rotor/session/{1}/feedback'.format(client.base_url, wave_session),
+                data=payload,
+            )
+        except YandexMusicError:
+            log.debug('wave feedback %s failed', event_type, exc_info=True)
+            return False
+        return True
+
+    def wave_track_started(self, wave_session, batch_id, track_id):
+        return self.wave_feedback(wave_session, batch_id, 'trackStarted', track_id)
 
     def track_lyrics(self, track_id, fmt='TEXT'):
         """Lyrics text for a track ('TEXT' plain or 'LRC' timed), or None."""

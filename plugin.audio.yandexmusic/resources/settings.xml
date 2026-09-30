@@ -16,9 +16,10 @@
         </setting>
         <setting id="preferred_codec" type="string" label="30210" help="30211">
           <level>1</level>
-          <default>mp3</default>
+          <default>flac</default>
           <constraints>
             <options>
+              <option label="30214">flac</option>
               <option label="30212">mp3</option>
               <option label="30213">aac</option>
             </options>

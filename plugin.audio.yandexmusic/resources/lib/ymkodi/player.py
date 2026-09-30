@@ -51,7 +51,14 @@ def play(ctx, params):
 
     try:
         url, track = ctx.service.resolve_stream(track_id)
-        if station:
+        if params.get('wave'):
+            try:
+                ctx.service.wave_track_started(params.get('wave'),
+                                               batch_id or params.get('batch'),
+                                               track_id)
+            except Exception:
+                log.debug('wave trackStarted feedback failed', exc_info=True)
+        elif station:
             ctx.service.radio_track_started(station, track_id, batch_id=batch_id)
     except NotAuthorized:
         notify(ctx, ctx.L(30010), ctx.L(30019))

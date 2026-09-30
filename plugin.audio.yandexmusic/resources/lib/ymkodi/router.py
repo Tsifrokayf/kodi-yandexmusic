@@ -8,7 +8,7 @@ import xbmcgui
 import xbmcplugin
 import xbmcvfs
 
-from . import auth, karaoke, lyrics as lyrics_mod, player, ui
+from . import auth, karaoke, lyrics as lyrics_mod, player, ui, updatecheck
 from .api import YandexMusicService
 from .cache import Cache
 from .store import SessionStore
@@ -98,18 +98,35 @@ def _liked_artist_ids(ctx):
         return set()
 
 
-def _track_menu(ctx, track, liked_keys):
+def _track_menu(ctx, track, liked_keys, wave=None):
     full_id = track.track_id
     plain_id = str(track.id)
     is_liked = full_id in liked_keys or plain_id in liked_keys
+    wave_session = (wave or {}).get('session')
+    if wave_session:
+        wave_params = {'wave': wave_session, 'batch': (wave or {}).get('batch') or '',
+                       'track': full_id, 'liked': '1' if is_liked else '0'}
+        like_url = build_url(ctx.base_url, 'wave_like', **wave_params)
+    else:
+        like_url = build_url(ctx.base_url, 'like', track=full_id)
     menu = [
-        (ctx.L(30081 if is_liked else 30080), build_url(ctx.base_url, 'like', track=full_id)),
-        (ctx.L(30082), build_url(ctx.base_url, 'add_to_playlist', track=full_id)),
+        (ctx.L(30081 if is_liked else 30080), like_url),
     ]
+    if wave_session:
+        menu.append((ctx.L(30111),
+                     build_url(ctx.base_url, 'wave_dislike',
+                               wave=wave_session,
+                               batch=(wave or {}).get('batch') or '',
+                               track=full_id,
+                               liked='1' if is_liked else '0')))
+    menu.append((ctx.L(30082), build_url(ctx.base_url, 'add_to_playlist', track=full_id)))
     if track.albums:
         menu.append((ctx.L(30085), build_url(ctx.base_url, 'album', id=track.albums[0].id)))
     if track.artists:
         menu.append((ctx.L(30086), build_url(ctx.base_url, 'artist', id=track.artists[0].id)))
+    menu.append((ctx.L(30109), build_url(ctx.base_url, 'wave', seed='track:{0}'.format(track.id))))
+    if track.artists:
+        menu.append((ctx.L(30110), build_url(ctx.base_url, 'wave', seed='artist:{0}'.format(track.artists[0].id))))
     menu.append((ctx.L(30061),
                  build_url(ctx.base_url, 'station', station='track:{0}'.format(track.id))))
     if track.artists:
@@ -120,10 +137,11 @@ def _track_menu(ctx, track, liked_keys):
     return menu
 
 
-def _add_tracks(ctx, tracks, liked_keys, play_params=None, extra_art=None):
+def _add_tracks(ctx, tracks, liked_keys, play_params=None, extra_art=None, wave=None):
     for track in tracks:
         ui.add_track(ctx, track, play_params=play_params,
-                     menu=_track_menu(ctx, track, liked_keys), extra_art=extra_art)
+                     menu=_track_menu(ctx, track, liked_keys, wave=wave),
+                     extra_art=extra_art)
 
 
 def _album_label(album):
@@ -137,6 +155,8 @@ def _add_albums(ctx, albums, liked_ids):
         is_liked = str(album.id) in liked_ids
         menu = [(ctx.L(30081 if is_liked else 30080),
                  build_url(ctx.base_url, 'like_album', id=album.id, liked='0' if is_liked else '1'))]
+        menu.append((ctx.L(30109),
+                     build_url(ctx.base_url, 'wave', seed='album:{0}'.format(album.id))))
         if album.artists:
             menu.append((ctx.L(30086), build_url(ctx.base_url, 'artist', id=album.artists[0].id)))
         ui.add_folder(ctx, _album_label(album), 'album', {'id': album.id},
@@ -149,6 +169,8 @@ def _add_artists(ctx, artists, liked_ids):
         menu = [
             (ctx.L(30081 if is_liked else 30080),
              build_url(ctx.base_url, 'like_artist', id=artist.id, liked='0' if is_liked else '1')),
+            (ctx.L(30110),
+             build_url(ctx.base_url, 'wave', seed='artist:{0}'.format(artist.id))),
             (ctx.L(30062), build_url(ctx.base_url, 'station', station='artist:{0}'.format(artist.id))),
         ]
         ui.add_folder(ctx, artist.name or '', 'artist', {'id': artist.id},
@@ -184,6 +206,10 @@ def root(ctx, params):
     ui.add_folder(ctx, ctx.L(30103), 'wave')
     ui.add_folder(ctx, ctx.L(30005), 'account')
     ui.add_folder(ctx, ctx.L(30006), 'settings')
+    try:
+        updatecheck.check_for_update(ctx)
+    except Exception:
+        log.debug('update check crashed', exc_info=True)
     _finish(ctx)
 
 
@@ -471,14 +497,42 @@ def play(ctx, params):
 
 
 def wave(ctx, params):
-    _meta, tracks = ctx.service.wave_session()
+    seed = params.get('seed') or ''
+    meta, tracks = ctx.service.wave_session([seed] if seed else None)
     if not tracks:
         _empty_notice(ctx)
         _finish(ctx)
         return
-    _add_tracks(ctx, tracks, _liked_track_keys(ctx))
-    ui.add_folder(ctx, ctx.L(30095), 'wave')
+    wave_meta = meta or {}
+    play_params = None
+    if wave_meta.get('session'):
+        play_params = {'wave': wave_meta['session'], 'batch': wave_meta.get('batch') or ''}
+    _add_tracks(ctx, tracks, _liked_track_keys(ctx),
+                play_params=play_params, wave=wave_meta)
+    ui.add_folder(ctx, ctx.L(30095), 'wave', {'seed': seed} if seed else {})
     _finish(ctx, 'songs')
+
+
+def wave_like(ctx, params):
+    track_id = params.get('track') or ''
+    if not track_id:
+        return
+    action = ctx.service.toggle_like_track(track_id)
+    feedback = 'like' if action == 'added' else 'unlike'
+    ctx.service.wave_feedback(params.get('wave'), params.get('batch'), feedback, track_id)
+    ui.notify(ctx, '', ctx.L(30081 if action == 'removed' else 30080), sound=False)
+    xbmc.executebuiltin('Container.Refresh')
+
+
+def wave_dislike(ctx, params):
+    track_id = params.get('track') or ''
+    if not track_id:
+        return
+    if params.get('liked') == '1':
+        ctx.service.toggle_like_track(track_id)
+    ctx.service.wave_feedback(params.get('wave'), params.get('batch'), 'unlike', track_id)
+    ui.notify(ctx, '', ctx.L(30111), sound=False)
+    xbmc.executebuiltin('Container.Refresh')
 
 
 def lyrics(ctx, params):
@@ -682,6 +736,8 @@ ACTIONS = {
     'play': play,
     'preload_bg': player.preload_bg,
     'wave': wave,
+    'wave_like': wave_like,
+    'wave_dislike': wave_dislike,
     'lyrics': lyrics,
     'karaoke': karaoke_view,
     'like': like,

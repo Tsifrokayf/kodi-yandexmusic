@@ -273,6 +273,26 @@ msgctxt "#30108"
 msgid "ESC closes karaoke"
 msgstr "ESC closes karaoke"
 
+msgctxt "#30113"
+msgid "Version %s is available (installed %s). Update from the repository or GitHub"
+msgstr "Version %s is available (installed %s). Update from the repository or GitHub"
+
+msgctxt "#30112"
+msgid "Plugin update available"
+msgstr "Plugin update available"
+
+msgctxt "#30111"
+msgid "Dislike"
+msgstr "Dislike"
+
+msgctxt "#30110"
+msgid "My Wave from this artist"
+msgstr "My Wave from this artist"
+
+msgctxt "#30109"
+msgid "My Wave from this track"
+msgstr "My Wave from this track"
+
 msgctxt "#30200"
 msgid "General"
 msgstr "General"
@@ -304,6 +324,10 @@ msgstr "MP3"
 msgctxt "#30213"
 msgid "AAC"
 msgstr "AAC"
+
+msgctxt "#30214"
+msgid "FLAC (lossless)"
+msgstr "FLAC (lossless)"
 
 msgctxt "#30220"
 msgid "Cache lifetime (minutes)"
