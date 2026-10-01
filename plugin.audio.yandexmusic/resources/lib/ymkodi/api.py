@@ -66,6 +66,24 @@ def parse_wave_result(result, client):
     return tracks
 
 
+def unresolved_count(items):
+    """How many items still need a network resolve to become full tracks."""
+    count = 0
+    for item in items:
+        if not isinstance(item, Track) and getattr(item, 'track', None) is None:
+            count += 1
+    return count
+
+
+def short_track_ids(items):
+    """Stable fingerprint of a track list (order matters)."""
+    ids = []
+    for item in items:
+        track_id = getattr(item, 'track_id', None)
+        ids.append(str(track_id if track_id is not None else getattr(item, 'id', '')))
+    return ids
+
+
 def extract_playlists(result):
     """Normalize client.playlists() result to a list of Playlist objects."""
     if result is None:
@@ -312,7 +330,7 @@ class YandexMusicService(object):
         resolved = []
         missing = []
         for item in items:
-            track = getattr(item, 'track', None)
+            track = item if isinstance(item, Track) else getattr(item, 'track', None)
             if track is not None:
                 resolved.append(track)
             else:
@@ -332,13 +350,47 @@ class YandexMusicService(object):
         result = []
         resolved_iter = iter(resolved)
         for item in items:
-            if getattr(item, 'track', None) is not None:
+            track = item if isinstance(item, Track) else getattr(item, 'track', None)
+            if track is not None:
                 result.append(next(resolved_iter))
                 continue
             track = fetched.get(item.track_id) or fetched.get(split_track_id(item.track_id)[0])
             if track is not None:
                 result.append(track)
         return result
+
+    def cached_full_tracks(self, key, short_items, ttl=None):
+        """Previously stored full tracks for this exact list, or None."""
+        if self.cache is None:
+            return None
+        payload = self.cache.get('fulltracks:' + key, ttl if ttl is not None else self.cache_ttl)
+        if not isinstance(payload, dict):
+            return None
+        if payload.get('ids') != short_track_ids(short_items):
+            return None
+        raw_tracks = payload.get('tracks')
+        if not raw_tracks:
+            return None
+        try:
+            client = self.client
+            return [Track.de_json(item, client) for item in raw_tracks]
+        except Exception:
+            log.debug('full tracks cache %s restore failed', key, exc_info=True)
+            return None
+
+    def store_full_tracks(self, key, short_items, tracks):
+        """Persist resolved tracks together with the source list fingerprint."""
+        if self.cache is None:
+            return False
+        try:
+            raw_tracks = [json.loads(track.to_json()) for track in tracks]
+        except Exception:
+            log.debug('full tracks cache %s serialize failed', key, exc_info=True)
+            return False
+        return bool(self.cache.set('fulltracks:' + key, {
+            'ids': short_track_ids(short_items),
+            'tracks': raw_tracks,
+        }))
 
     # ----------------------------------------------------------------- likes
 

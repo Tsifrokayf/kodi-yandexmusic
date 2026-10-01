@@ -67,7 +67,9 @@ def track_listitem(track, menu=None, extra_art=None):
     li.setProperty('IsPlayable', 'true')
     info = {'title': title, 'mediatype': 'song'}
     if artists:
-        info['artist'] = [a.name for a in (getattr(track, 'artists', None) or [])]
+        # Kodi 21 ignores a list here and drops the artist tag completely,
+        # which breaks OSD/lyrics scripts: pass the joined string instead.
+        info['artist'] = artists
     albums = getattr(track, 'albums', None) or []
     if albums:
         info['album'] = albums[0].title or ''

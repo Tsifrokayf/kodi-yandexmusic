@@ -9,7 +9,7 @@ import xbmcplugin
 import xbmcvfs
 
 from . import auth, karaoke, lyrics as lyrics_mod, player, ui, updatecheck
-from .api import YandexMusicService
+from .api import YandexMusicService, unresolved_count
 from .cache import Cache
 from .store import SessionStore
 from .urls import build_url, parse_params
@@ -195,6 +195,88 @@ def _next_page_item(ctx, action, params, page, total, per_page):
         ui.add_folder(ctx, ctx.L(30093), action, next_params)
 
 
+# Progressive track loading: a big list that still needs network resolves is
+# shown partially right away, the rest is fetched after endOfDirectory.
+FAST_TRACKS = 20
+
+
+def _folder_is(ctx, action, folder=None):
+    """True while the current container still points at this action."""
+    if folder is None:
+        folder = xbmc.getInfoLabel('Container.FolderPath') or ''
+    if not folder:
+        return True
+    if not folder.startswith(ctx.base_url):
+        return False
+    query = folder.split('?', 1)[1] if '?' in folder else ''
+    return (parse_params(query).get('action') or 'root') == action
+
+
+def _background_fill(ctx, action, shorts, cache_key):
+    """Resolve the rest of a partially shown list after endOfDirectory and
+    refresh the folder once everything is cached."""
+    try:
+        tracks = ctx.service.full_tracks(shorts)
+    except Exception:
+        log.exception('background track resolve failed')
+        return
+    if not tracks:
+        return
+    try:
+        stored = ctx.service.store_full_tracks(cache_key, shorts, tracks)
+    except Exception:
+        log.exception('background track cache store failed')
+        return
+    # Refresh only after a successful store: a refresh without cached data
+    # would restart this fill in a loop.
+    folder = xbmc.getInfoLabel('Container.FolderPath') or ''
+    if not stored:
+        return
+    if not _folder_is(ctx, action, folder):
+        xbmc.log('ymkodi: not refreshing %s, current folder is %s'
+                 % (action, folder), xbmc.LOGINFO)
+        return
+    xbmc.log('ymkodi: %d/%d tracks cached for %s (folder %s)'
+             % (len(tracks), len(shorts), action, folder), xbmc.LOGINFO)
+    xbmc.executebuiltin('Container.Refresh')
+
+
+def _render_tracks(ctx, shorts, action, liked_keys=None, cache_key=None, content='songs'):
+    """Add a track list to the directory; when a large unresolved list is met,
+    show the first FAST_TRACKS entries right away and refill the rest in the
+    background (Container.Refresh once the cache is warm)."""
+    shorts = list(shorts or [])
+    if not shorts:
+        _empty_notice(ctx)
+        _finish(ctx, content)
+        return
+    keys = _liked_track_keys(ctx) if liked_keys is None else liked_keys
+
+    tracks = None
+    if cache_key:
+        try:
+            tracks = ctx.service.cached_full_tracks(cache_key, shorts)
+        except Exception:
+            log.debug('full tracks cache read failed', exc_info=True)
+        if tracks is not None:
+            xbmc.log('ymkodi: %d tracks restored from cache (%s)'
+                     % (len(tracks), action), xbmc.LOGINFO)
+    if tracks is None:
+        if cache_key and unresolved_count(shorts) > FAST_TRACKS:
+            head = ctx.service.full_tracks(shorts, limit=FAST_TRACKS)
+            _add_tracks(ctx, head, keys)
+            _finish(ctx, content)
+            xbmc.log('ymkodi: showing first %d of %d tracks (%s)'
+                     % (len(head), len(shorts), action), xbmc.LOGINFO)
+            _background_fill(ctx, action, shorts, cache_key)
+            return
+        tracks = ctx.service.full_tracks(shorts)
+    if not tracks:
+        _empty_notice(ctx)
+    _add_tracks(ctx, tracks, keys)
+    _finish(ctx, content)
+
+
 # ------------------------------------------------------------------- handlers
 
 def root(ctx, params):
@@ -248,11 +330,8 @@ def chart(ctx, params):
         _empty_notice(ctx)
         _finish(ctx)
         return
-    tracks = ctx.service.full_tracks(info.chart.fetch_tracks())
-    if not tracks:
-        _empty_notice(ctx)
-    _add_tracks(ctx, tracks, _liked_track_keys(ctx))
-    _finish(ctx, 'songs')
+    _render_tracks(ctx, info.chart.fetch_tracks(), 'chart',
+                   cache_key='chart', content='songs')
 
 
 def new_releases(ctx, params):
@@ -301,11 +380,12 @@ def my(ctx, params):
 
 def likes_tracks(ctx, params):
     tracks_list = ctx.service.likes_tracks_list()
-    tracks = ctx.service.full_tracks(tracks_list.tracks if tracks_list else [])
-    if not tracks:
-        _empty_notice(ctx)
-    _add_tracks(ctx, tracks, _liked_track_keys(ctx))
-    _finish(ctx, 'songs')
+    shorts = [item for item in (tracks_list.tracks if tracks_list else []) if item]
+    # Everything in this folder is liked: derive the keys from the list itself
+    # instead of fetching the likes again just for the context menu.
+    keys = set(item.track_id for item in shorts)
+    _render_tracks(ctx, shorts, 'likes_tracks', liked_keys=keys,
+                   cache_key='likes', content='songs')
 
 
 def likes_albums(ctx, params):
@@ -348,11 +428,9 @@ def playlist(ctx, params):
         _empty_notice(ctx)
         _finish(ctx)
         return
-    tracks = ctx.service.full_tracks(playlist_obj.fetch_tracks())
-    if not tracks:
-        _empty_notice(ctx)
-    _add_tracks(ctx, tracks, _liked_track_keys(ctx))
-    _finish(ctx, 'songs')
+    cache_key = 'playlist:{0}:{1}'.format(params.get('uid'), params.get('kind'))
+    _render_tracks(ctx, playlist_obj.fetch_tracks(), 'playlist',
+                   cache_key=cache_key, content='songs')
 
 
 def album(ctx, params):

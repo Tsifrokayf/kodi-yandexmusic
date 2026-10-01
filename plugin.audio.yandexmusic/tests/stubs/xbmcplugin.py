@@ -3,6 +3,7 @@ SORT_METHOD_UNSORTED = 0
 
 _added = []
 _resolved = []
+_ended = []
 
 
 def addDirectoryItem(handle, url, listitem, isFolder=False, totalItems=0):
@@ -11,7 +12,7 @@ def addDirectoryItem(handle, url, listitem, isFolder=False, totalItems=0):
 
 
 def endOfDirectory(handle, succeeded=True, updateListing=False, cacheToDisc=True):
-    pass
+    _ended.append(handle)
 
 
 def setContent(handle, content):

@@ -9,6 +9,7 @@ LOGFATAL = 6
 LOGNONE = 7
 
 BUILTINS = []
+INFOLABELS = {}
 
 
 def log(msg, level=LOGDEBUG):
@@ -25,6 +26,10 @@ def getLocalizedString(string_id):
 
 def getInfo(label):
     return ''
+
+
+def getInfoLabel(label):
+    return INFOLABELS.get(label, '')
 
 
 class Player(object):
