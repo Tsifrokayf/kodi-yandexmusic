@@ -26,13 +26,18 @@ def cache_dir(profile):
     return path
 
 
-def _safe_name(track_id):
+def _safe_name(track_id, codec=None):
     text = ''.join(ch if ch.isalnum() or ch in '-_.' else '_' for ch in str(track_id))
-    return (text or 'track') + '.audio'
+    text = text or 'track'
+    if codec:
+        safe_codec = ''.join(ch for ch in str(codec) if ch.isalnum())
+        if safe_codec:
+            text = text + '_' + safe_codec
+    return text + '.audio'
 
 
-def cached_path(profile, track_id):
-    return os.path.join(cache_dir(profile), _safe_name(track_id))
+def cached_path(profile, track_id, codec=None):
+    return os.path.join(cache_dir(profile), _safe_name(track_id, codec))
 
 
 def is_fresh(full):
@@ -111,9 +116,10 @@ def fetch(url, dest, on_progress=None, should_cancel=None):
     return done
 
 
-def preload_track(profile, url, track_id, on_progress=None, should_cancel=None):
+def preload_track(profile, url, track_id, on_progress=None, should_cancel=None,
+                  codec=None):
     """Return a local file path when ready, else None (stream instead)."""
-    dest = cached_path(profile, track_id)
+    dest = cached_path(profile, track_id, codec)
     if is_fresh(dest):
         return dest
     _cleanup(cache_dir(profile))

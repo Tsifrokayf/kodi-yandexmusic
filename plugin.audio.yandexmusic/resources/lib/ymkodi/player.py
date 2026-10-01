@@ -78,7 +78,7 @@ def play(ctx, params):
     path = None
     save_play_state(ctx, track_id, track)
     if not station and ctx.addon.getSetting('preload_track') != 'false':
-        cached = audiocache.cached_path(ctx.profile, track_id)
+        cached = audiocache.cached_path(ctx.profile, track_id, ctx.service.codec)
         if audiocache.is_fresh(cached):
             path = cached
         else:
@@ -100,7 +100,7 @@ def preload_bg(ctx, params):
     except Exception:
         log.info('background preload resolve failed for %s', track_id, exc_info=True)
         return
-    audiocache.preload_track(ctx.profile, url, track_id)
+    audiocache.preload_track(ctx.profile, url, track_id, codec=ctx.service.codec)
 
 
 def track_placeholder():

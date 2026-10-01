@@ -1,5 +1,5 @@
 <addons>
-<addon id="plugin.audio.yandexmusic" name="Яндекс Музыка" version="0.1.12" provider-name="Tsifrokayf">
+<addon id="plugin.audio.yandexmusic" name="Яндекс Музыка" version="0.1.13" provider-name="Tsifrokayf">
   <requires>
     <import addon="xbmc.python" version="3.0.0"/>
   </requires>

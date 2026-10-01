@@ -1,8 +1,12 @@
 """Yandex Music API service layer: caching, stream resolution, library ops."""
+import base64
+import hashlib
+import hmac
 import json
 import logging
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 
 from yandex_music import (
@@ -22,6 +26,31 @@ from .auth import NotAuthorized, get_access_token
 log = logging.getLogger(__name__)
 
 BATCH_LIMIT = 100
+
+# New signed endpoint that serves flac/aac (the classic /download-info only
+# ever answers mp3 for this account). Sign: HMAC-SHA256 over the request
+# parameter values with the desktop-app secret, base64 without padding.
+FILE_INFO_URL = 'https://api.music.yandex.net/get-file-info'
+FILE_INFO_KEY = b'kzqU4XhfCaY6B6JTHODeq5'
+FILE_INFO_UA = 'YandexMusicDesktopAppWindows/5.13.2'
+FILE_INFO_DEVICE = ('os=unknown; os_version=unknown; manufacturer=unknown; '
+                    'model=unknown; clid=; device_id=unknown; uuid=unknown')
+FILE_INFO_TRANSPORT = 'raw'
+# Preferred codec -> (quality, allowed codecs). The -mp4 variants must be
+# listed or the server downgrades everything to plain mp3.
+FILE_INFO_CODECS = {
+    'flac': ('lossless', 'flac,aac,he-aac,mp3,flac-mp4,aac-mp4,he-aac-mp4'),
+    'aac': ('hq', 'aac,he-aac,mp3,aac-mp4,he-aac-mp4'),
+}
+
+
+def file_info_sign(ts, track_id, quality, codecs, transports):
+    """HMAC signature for /get-file-info (see MarshalX/yandex-music-api#656)."""
+    message = '{0}{1}{2}{3}{4}'.format(
+        ts, track_id, quality, codecs, transports).replace(',', '')
+    digest = hmac.new(FILE_INFO_KEY, message.encode('utf-8'),
+                      hashlib.sha256).digest()
+    return base64.b64encode(digest).decode('utf-8')[:-1]
 
 
 class StreamError(Exception):
@@ -577,11 +606,72 @@ class YandexMusicService(object):
 
     # --------------------------------------------------------------- playback
 
+    def _file_info_url(self, track_id):
+        """Direct URL from /get-file-info for the preferred codec.
+
+        Returns None when the codec is mp3 (the classic endpoint already
+        serves it) or when the new endpoint cannot serve this track; the
+        caller then falls back to classic download-info resolution.
+        """
+        spec = FILE_INFO_CODECS.get(self.codec)
+        if spec is None:
+            return None
+        quality, codecs = spec
+        plain = str(track_id).partition(':')[0]
+        ts = int(time.time())
+        sign = file_info_sign(ts, plain, quality, codecs, FILE_INFO_TRANSPORT)
+        query = urllib.parse.urlencode({
+            'ts': ts,
+            'trackId': plain,
+            'quality': quality,
+            'codecs': codecs,
+            'transports': FILE_INFO_TRANSPORT,
+            'sign': sign,
+        })
+        token = get_access_token(self.store, self.manual_token)
+        request = urllib.request.Request(
+            FILE_INFO_URL + '?' + query,
+            headers={
+                'Authorization': 'OAuth ' + (token or ''),
+                'User-Agent': FILE_INFO_UA,
+                'X-Yandex-Music-Device': FILE_INFO_DEVICE,
+            })
+        try:
+            with urllib.request.urlopen(request, timeout=20) as response:
+                payload = json.load(response)
+        except (urllib.error.URLError, ValueError, OSError) as error:
+            log.debug('get-file-info failed for %s: %s', track_id, error)
+            return None
+        result = payload.get('result')
+        info = None
+        if isinstance(result, dict):
+            info = result.get('downloadInfo')
+            if isinstance(info, list):
+                info = info[0] if info else None
+        if not isinstance(info, dict):
+            log.debug('get-file-info empty for %s', track_id)
+            return None
+        if info.get('key'):
+            # encraw transport gives an encrypted file Kodi cannot play.
+            log.debug('get-file-info encrypted for %s', track_id)
+            return None
+        urls = info.get('urls') or []
+        url = urls[0] if urls else info.get('url')
+        if not url:
+            log.debug('get-file-info has no url for %s', track_id)
+            return None
+        log.debug('get-file-info %s: %s %s', track_id,
+                  info.get('codec'), info.get('bitrate'))
+        return url
+
     def resolve_stream(self, track_id):
         """Return (direct_url, Track) for the given 'trackId[:albumId]' id."""
         track = self.track(track_id)
         if track is None:
             raise StreamError('track not found: {0}'.format(track_id))
+        url = self._file_info_url(track_id)
+        if url:
+            return url, track
         try:
             infos = track.get_download_info()
         except YandexMusicError as error:
