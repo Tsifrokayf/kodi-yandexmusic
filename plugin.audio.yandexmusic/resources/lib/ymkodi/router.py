@@ -288,6 +288,7 @@ def root(ctx, params):
     ui.add_folder(ctx, ctx.L(30103), 'wave')
     ui.add_folder(ctx, ctx.L(30005), 'account')
     ui.add_folder(ctx, ctx.L(30006), 'settings')
+    ui.add_folder(ctx, ctx.L(30232), 'help')
     try:
         updatecheck.check_for_update(ctx)
     except Exception:
@@ -297,7 +298,12 @@ def root(ctx, params):
 
 def player_window(ctx, params):
     """Quick jump to the full-screen player (visualisation / fullscreen video)."""
+    state = player.read_play_state(ctx)
     try:
+        # A live karaoke overlay is a modal dialog and would get the
+        # window activation refused — drop it first and wait for the close.
+        karaoke.release_overlay()
+        karaoke.wait_overlay_closed(xbmc.Monitor())
         current = xbmc.Player()
         if current.isPlayingVideo():
             xbmc.executebuiltin('ActivateWindow(fullscreenvideo)')
@@ -307,12 +313,22 @@ def player_window(ctx, params):
             ui.notify(ctx, '', ctx.L(30099), sound=False)
     except Exception:
         log.exception('cannot open player window')
+    # restart auto lyrics for the current track inside the full-screen player
+    if (state and state.get('track')
+            and ctx.addon.getSetting('karaoke_auto') != 'false'
+            and xbmc.Player().isPlaying()):
+        artists = state.get('artists') or ''
+        track_title = state.get('title') or ''
+        title = '{0} — {1}'.format(artists, track_title) if artists else track_title
+        xbmc.executebuiltin('RunPlugin({0})'.format(
+            build_url(ctx.base_url, 'karaoke_auto', track=state['track'],
+                      title=title)))
     # fallback items so closing the player never lands on an empty folder
-    state = player.read_play_state(ctx)
     if state and state.get('track'):
         ui.add_folder(ctx, ctx.L(30104), 'lyrics', {'track': state['track']})
         ui.add_folder(ctx, ctx.L(30105), 'karaoke', {'track': state['track']})
     ui.add_folder(ctx, ctx.L(30001), 'home')
+    ui.add_folder(ctx, ctx.L(30232), 'help')
     _finish(ctx)
 
 
@@ -613,18 +629,28 @@ def wave_dislike(ctx, params):
     xbmc.executebuiltin('Container.Refresh')
 
 
-def lyrics(ctx, params):
-    track_id = params.get('track') or ''
-    if not track_id:
-        return
-    text = ctx.service.track_lyrics(track_id, 'TEXT')
-    if not text:
+def _lyrics_data(ctx, track_id):
+    """(synced lrc entries, plain text lines): one fetch of each at most."""
+    try:
         lrc = ctx.service.track_lyrics(track_id, 'LRC')
-        text = lyrics_mod.plain_from_lrc(lrc) if lrc else ''
-    if not text:
-        ui.notify(ctx, '', ctx.L(30106), sound=False)
-        return
-    xbmcgui.Dialog().textviewer(ctx.L(30104), text)
+        entries = lyrics_mod.parse_lrc(lrc) if lrc else []
+    except Exception:
+        log.debug('lyrics lrc fetch failed for %s', track_id, exc_info=True)
+        entries = []
+    if entries:
+        return entries, []
+    try:
+        text = ctx.service.track_lyrics(track_id, 'TEXT')
+    except Exception:
+        log.debug('lyrics text fetch failed for %s', track_id, exc_info=True)
+        text = None
+    lines = [line for line in (text or '').splitlines() if line.strip()]
+    return [], lines
+
+
+def lyrics(ctx, params):
+    # Same karaoke overlay as action=karaoke: no separate text window.
+    karaoke_view(ctx, params)
 
 
 def karaoke_view(ctx, params):
@@ -638,14 +664,9 @@ def karaoke_view(ctx, params):
     if not track_id:
         ui.notify(ctx, '', ctx.L(30107), sound=False)
         return
-    lrc = ctx.service.track_lyrics(track_id, 'LRC')
-    entries = lyrics_mod.parse_lrc(lrc) if lrc else []
-    if not entries:
-        text = ctx.service.track_lyrics(track_id, 'TEXT')
-        if text:
-            xbmcgui.Dialog().textviewer(ctx.L(30104), text)
-        else:
-            ui.notify(ctx, '', ctx.L(30106), sound=False)
+    entries, lines = _lyrics_data(ctx, track_id)
+    if not entries and not lines:
+        ui.notify(ctx, '', ctx.L(30106), sound=False)
         return
     media = xbmc.Player()
     if not media.isPlaying():
@@ -658,6 +679,8 @@ def karaoke_view(ctx, params):
         if not media.isPlaying():
             ui.notify(ctx, '', ctx.L(30107), sound=False)
             return
+    if not entries:
+        entries = lyrics_mod.spread_entries(lines, media.getTotalTime())
     title = ''
     if state.get('track') == track_id:
         artists = state.get('artists') or ''
@@ -665,6 +688,51 @@ def karaoke_view(ctx, params):
         title = '{0} — {1}'.format(artists, track_title) if artists else track_title
     overlay = karaoke.KaraokeOverlay(title, entries, ctx.L(30108))
     overlay.run(xbmc.Monitor(), media)
+
+
+def karaoke_auto(ctx, params):
+    """Lyrics overlay after every play (RunPlugin, setting karaoke_auto).
+
+    Auto karaoke belongs to the full-screen player only: wait briefly for the
+    visualisation window (the RunPlugin races window activation) and bail out
+    when playback happens anywhere else (home, plugin folders).
+    """
+    if ctx.handle >= 0:
+        _finish(ctx)
+    if ctx.addon.getSetting('karaoke_auto') == 'false':
+        return
+    track_id = params.get('track') or ''
+    if not track_id:
+        return
+    media = xbmc.Player()
+    if not media.isPlaying():
+        return
+    monitor = xbmc.Monitor()
+    if not _await_fullscreen(monitor, media):
+        log.debug('auto karaoke: skipped outside full-screen player')
+        return
+    entries, lines = _lyrics_data(ctx, track_id)
+    if not entries and lines:
+        entries = lyrics_mod.spread_entries(lines, media.getTotalTime())
+    if not entries:
+        log.debug('auto karaoke: no lyrics for %s', track_id)
+        return
+    if not karaoke.in_fullscreen():
+        return  # the user left the full-screen player while fetching lyrics
+    overlay = karaoke.KaraokeOverlay(params.get('title') or '', entries,
+                                      ctx.L(30108))
+    overlay.run(monitor, media, require_fullscreen=True)
+
+
+def _await_fullscreen(monitor, media, ticks=16, step=0.25):
+    """True once the full-screen player is active (or right away if it is)."""
+    for _ in range(ticks):
+        if karaoke.in_fullscreen():
+            return True
+        if monitor.abortRequested() or not media.isPlaying():
+            return False
+        monitor.waitForAbort(step)
+    return karaoke.in_fullscreen()
 
 
 def like(ctx, params):
@@ -793,6 +861,12 @@ def settings(ctx, params):
     _finish(ctx)
 
 
+def help_view(ctx, params):
+    if ctx.handle >= 0:
+        _finish(ctx)
+    xbmcgui.Dialog().textviewer(ctx.L(30232), ctx.L(30233))
+
+
 ACTIONS = {
     'root': root,
     'player': player_window,
@@ -823,6 +897,7 @@ ACTIONS = {
     'wave_dislike': wave_dislike,
     'lyrics': lyrics,
     'karaoke': karaoke_view,
+    'karaoke_auto': karaoke_auto,
     'like': like,
     'like_album': like_album,
     'like_artist': like_artist,
@@ -832,6 +907,7 @@ ACTIONS = {
     'account': account,
     'account_info': account_info,
     'settings': settings,
+    'help': help_view,
 }
 
 

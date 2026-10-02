@@ -79,9 +79,24 @@ class ControlLabel(object):
 
 
 class Window(object):
+    _shared_props = {}
+
     def __init__(self, *args):
         self._controls = []
         self._closed = False
+        self._window_id = args[0] if args else 0
+
+    def _props(self):
+        return Window._shared_props.setdefault(self._window_id, {})
+
+    def setProperty(self, key, value):
+        self._props()[key] = str(value)
+
+    def getProperty(self, key):
+        return self._props().get(key, '')
+
+    def clearProperty(self, key):
+        self._props().pop(key, None)
 
     def getWidth(self):
         return 1280

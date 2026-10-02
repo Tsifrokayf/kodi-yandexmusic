@@ -336,3 +336,19 @@ msgstr "Cache lifetime (minutes)"
 msgctxt "#30221"
 msgid "How long to keep home page, chart and search data"
 msgstr "How long to keep home page, chart and search data"
+
+msgctxt "#30230"
+msgid "Karaoke lyrics overlay"
+msgstr "Karaoke lyrics overlay"
+
+msgctxt "#30231"
+msgid "Show lyrics automatically as a karaoke overlay in the full-screen player"
+msgstr "Show lyrics automatically as a karaoke overlay in the full-screen player"
+
+msgctxt "#30232"
+msgid "How to use"
+msgstr "How to use"
+
+msgctxt "#30233"
+msgid "Track context menu: right click, long press OK or the C key — Like, Lyrics, Karaoke, radio.\n\nAuto karaoke overlay shows only in the full-screen player (\"Player\" in the main menu). Press ESC to close it.\n\nSound quality (FLAC/AAC/MP3) is in the add-on settings."
+msgstr "Track context menu: right click, long press OK or the C key — Like, Lyrics, Karaoke, radio.\n\nAuto karaoke overlay shows only in the full-screen player (\"Player\" in the main menu). Press ESC to close it.\n\nSound quality (FLAC/AAC/MP3) is in the add-on settings."

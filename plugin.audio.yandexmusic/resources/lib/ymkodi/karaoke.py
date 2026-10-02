@@ -1,6 +1,8 @@
 """Karaoke overlay: auto-scrolling lyrics on top of the playing track."""
 import logging
+import uuid
 
+import xbmc
 import xbmcgui
 
 from .lyrics import line_index
@@ -8,6 +10,35 @@ from .lyrics import line_index
 log = logging.getLogger(__name__)
 
 CLOSE_ACTIONS = {10, 13, 92}  # previous menu, stop, nav back
+TOKEN_PROPERTY = 'plugin.audio.yandexmusic.karaoke'
+# Auto lyrics live only in the full-screen player (visualisation window).
+# NB: getCondVisibility rejects '||' here (Misplaced |), check both windows.
+FULLSCREEN_CONDITIONS = ('Window.IsActive(visualisation)',
+                         'Window.IsActive(fullscreenvideo)')
+
+
+def in_fullscreen():
+    return any(bool(xbmc.getCondVisibility(cond))
+               for cond in FULLSCREEN_CONDITIONS)
+
+
+def release_overlay(window_id=10000):
+    """Drop our overlay token so any live overlay closes (frees modal input)."""
+    try:
+        xbmcgui.Window(window_id).clearProperty(TOKEN_PROPERTY)
+    except Exception:
+        log.debug('karaoke token clear failed', exc_info=True)
+
+
+def wait_overlay_closed(monitor, ticks=8, step=0.25):
+    """Wait until no modal dialog blocks window activation (overlay closing)."""
+    for _ in range(ticks):
+        if not xbmc.getCondVisibility('System.HasActiveModalDialog'):
+            return True
+        if monitor.abortRequested():
+            return False
+        monitor.waitForAbort(step)
+    return not xbmc.getCondVisibility('System.HasActiveModalDialog')
 
 
 class KaraokeOverlay(xbmcgui.WindowDialog):
@@ -21,21 +52,35 @@ class KaraokeOverlay(xbmcgui.WindowDialog):
         self._alive = True
         width = self.getWidth() or 1280
         height = self.getHeight() or 720
-        self._title = xbmcgui.ControlLabel(
-            0, int(height * 0.16), width, 40, title or '',
-            font='font16', alignment=2, textColor='FF9BE0FF')
-        self._current = xbmcgui.ControlLabel(
-            40, int(height * 0.40), width - 80, 90, '',
-            font='font30', alignment=2, textColor='FFFFE9A3')
-        self._next = xbmcgui.ControlLabel(
-            60, int(height * 0.57), width - 120, 50, '',
-            font='font14', alignment=2, textColor='FF909090')
-        self._hint = xbmcgui.ControlLabel(
-            0, height - 50, width, 30, hint or '',
-            font='font12', alignment=2, textColor='FF666666')
-        for control in (self._title, self._current, self._next, self._hint):
-            self.addControl(control)
+        # ControlLabel has no shadowColor here: draw a black copy underneath.
+        self._title = self._pair(
+            0, int(height * 0.14), width, 50, title or '',
+            'font32', 'FF9BE0FF')
+        self._current = self._pair(
+            40, int(height * 0.38), width - 80, 110, '',
+            'font45', 'FFFFE9A3')
+        self._next = self._pair(
+            60, int(height * 0.57), width - 120, 60, '',
+            'font27', 'FFB0B0B0')
+        self._hint = self._pair(
+            0, height - 54, width, 34, hint or '',
+            'font13', 'FF909090')
         self._shown = None
+
+    def _pair(self, x, y, w, h, text, font, color, shift=2):
+        shadow = xbmcgui.ControlLabel(
+            x + shift, y + shift, w, h, text, font=font, alignment=2,
+            textColor='FF000000')
+        label = xbmcgui.ControlLabel(
+            x, y, w, h, text, font=font, alignment=2, textColor=color)
+        self.addControl(shadow)
+        self.addControl(label)
+        return label, shadow
+
+    def _set_pair(self, pair, text):
+        label, shadow = pair
+        label.setLabel(text)
+        shadow.setLabel(text)
 
     def onAction(self, action):
         try:
@@ -55,17 +100,40 @@ class KaraokeOverlay(xbmcgui.WindowDialog):
         else:
             current = lines[index] if index < len(lines) else ''
             following = lines[index + 1] if index + 1 < len(lines) else ''
-        self._current.setLabel(current)
-        self._next.setLabel(following)
+        self._set_pair(self._current, current)
+        self._set_pair(self._next, following)
         self._shown = index
 
-    def run(self, monitor, player):
-        """Drive the overlay until stopped, track end, Kodi shutdown or close."""
+    def run(self, monitor, player, require_fullscreen=False):
+        """Drive the overlay until stopped, track end, Kodi shutdown or close.
+
+        require_fullscreen: exit as soon as the full-screen player window is
+        no longer active (auto karaoke must not linger over other windows).
+        """
         self.render(-1)
+        # Single-instance guard: when the next track starts a fresh overlay,
+        # the previous one exits instead of stacking on top of it.
+        token = uuid.uuid4().hex
+        window = xbmcgui.Window(10000)
+        try:
+            window.setProperty(TOKEN_PROPERTY, token)
+        except Exception:
+            log.debug('karaoke token set failed', exc_info=True)
+            token = None
+        try:
+            playing_file = player.getPlayingFile()
+        except RuntimeError:
+            playing_file = ''
         try:
             self.show()
         except RuntimeError:
             log.debug('karaoke show failed', exc_info=True)
+            if token is not None:
+                try:
+                    if window.getProperty(TOKEN_PROPERTY) == token:
+                        window.clearProperty(TOKEN_PROPERTY)
+                except Exception:
+                    pass
             return
         last = None
         while self._alive and not monitor.abortRequested():
@@ -74,6 +142,16 @@ class KaraokeOverlay(xbmcgui.WindowDialog):
                 break
             if not player.isPlaying():
                 break
+            if token is not None and window.getProperty(TOKEN_PROPERTY) != token:
+                break  # a newer overlay took over
+            if require_fullscreen and not in_fullscreen():
+                break  # the full-screen player was closed
+            if playing_file:
+                try:
+                    if player.getPlayingFile() != playing_file:
+                        break  # the track changed
+                except RuntimeError:
+                    break
             try:
                 moment = player.getTime()
             except RuntimeError:
@@ -82,6 +160,12 @@ class KaraokeOverlay(xbmcgui.WindowDialog):
             if index != last:
                 self.render(index)
                 last = index
+        if token is not None:
+            try:
+                if window.getProperty(TOKEN_PROPERTY) == token:
+                    window.clearProperty(TOKEN_PROPERTY)
+            except Exception:
+                log.debug('karaoke token clear failed', exc_info=True)
         try:
             self.close()
         except RuntimeError:

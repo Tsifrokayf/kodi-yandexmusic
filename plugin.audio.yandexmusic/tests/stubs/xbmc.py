@@ -10,6 +10,7 @@ LOGNONE = 7
 
 BUILTINS = []
 INFOLABELS = {}
+COND_VISIBILITY = {}
 
 
 def log(msg, level=LOGDEBUG):
@@ -18,6 +19,10 @@ def log(msg, level=LOGDEBUG):
 
 def executebuiltin(cmd):
     BUILTINS.append(cmd)
+
+
+def getCondVisibility(condition):
+    return bool(COND_VISIBILITY.get(condition, False))
 
 
 def getLocalizedString(string_id):
@@ -35,6 +40,9 @@ def getInfoLabel(label):
 class Player(object):
     playing = False
     playing_video = False
+    playing_file = ''
+    total_time = 0.0
+    current_time = 0.0
 
     def isPlayingAudio(self):
         return type(self).playing
@@ -44,6 +52,15 @@ class Player(object):
 
     def isPlaying(self):
         return type(self).playing or type(self).playing_video
+
+    def getPlayingFile(self):
+        return type(self).playing_file
+
+    def getTotalTime(self):
+        return type(self).total_time
+
+    def getTime(self):
+        return type(self).current_time
 
 
 class Monitor(object):

@@ -336,3 +336,19 @@ msgstr "Время кэша (минуты)"
 msgctxt "#30221"
 msgid "How long to keep home page, chart and search data"
 msgstr "Как долго хранить данные главной страницы, чарта и поиска"
+
+msgctxt "#30230"
+msgid "Karaoke lyrics overlay"
+msgstr "Текст песен как караоке"
+
+msgctxt "#30231"
+msgid "Show lyrics automatically as a karaoke overlay while one of your tracks plays"
+msgstr "Автоматически показывать текст песни караоке-оверлеем в полноэкранном плеере"
+
+msgctxt "#30232"
+msgid "How to use"
+msgstr "Как пользоваться"
+
+msgctxt "#30233"
+msgid "Track context menu: right click, long press OK or the C key — Like, Lyrics, Karaoke, radio.\n\nAuto karaoke overlay shows only in the full-screen player (\"Player\" in the main menu). Press ESC to close it.\n\nSound quality (FLAC/AAC/MP3) is in the add-on settings."
+msgstr "Контекстное меню трека: правая кнопка мыши, долгое нажатие OK или клавиша C — лайк, «Текст песни», «Караоке», радио.\n\nАвто-караоке показывается только в полноэкранном плеере («Плеер» в главном меню). ESC закрывает оверлей.\n\nКачество звука (FLAC/AAC/MP3) — в настройках дополнения."

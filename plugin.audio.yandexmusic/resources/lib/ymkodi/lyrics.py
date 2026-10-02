@@ -46,3 +46,19 @@ def line_index(entries, moment):
         else:
             break
     return index
+
+
+def spread_entries(lines, duration):
+    """Plain-text lines spread evenly over `duration` seconds.
+
+    Karaoke scroll for lyrics without timing: the first line shows at 0:00
+    and the last one near the end of the track.
+    """
+    lines = [line for line in (lines or []) if line and line.strip()]
+    if not lines:
+        return []
+    total = float(duration or 0)
+    if total <= 0:
+        total = 3.0 * len(lines)
+    step = max(total / len(lines), 0.35)
+    return [(index * step, line) for index, line in enumerate(lines)]

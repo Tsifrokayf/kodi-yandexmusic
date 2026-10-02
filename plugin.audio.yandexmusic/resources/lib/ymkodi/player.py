@@ -88,6 +88,13 @@ def play(ctx, params):
     li = track_listitem(track)
     li.setPath(path or url)
     xbmcplugin.setResolvedUrl(ctx.handle, True, li)
+    if ctx.addon.getSetting('karaoke_auto') != 'false':
+        artists = track_artists(track)
+        track_title = getattr(track, 'title', None) or ''
+        title = '{0} — {1}'.format(artists, track_title) if artists else track_title
+        xbmc.executebuiltin('RunPlugin({0})'.format(
+            build_url(ctx.base_url, 'karaoke_auto', track=track_id,
+                      title=title)))
 
 
 def preload_bg(ctx, params):

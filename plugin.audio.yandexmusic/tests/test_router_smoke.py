@@ -27,7 +27,7 @@ class RouterSmokeTest(unittest.TestCase):
     def test_root(self):
         self.assertEqual(self.actions(''),
                          ['player', 'home', 'my', 'search', 'radio', 'wave',
-                          'account', 'settings'])
+                          'account', 'settings', 'help'])
 
     def test_home(self):
         self.assertEqual(self.actions('?action=home'),
@@ -51,7 +51,7 @@ class RouterSmokeTest(unittest.TestCase):
     def test_unknown_action_falls_back_to_root(self):
         self.assertEqual(self.actions('?action=bogus'),
                          ['player', 'home', 'my', 'search', 'radio', 'wave',
-                          'account', 'settings'])
+                          'account', 'settings', 'help'])
 
     def test_player_window_opens_visualisation(self):
         import xbmc
@@ -60,7 +60,7 @@ class RouterSmokeTest(unittest.TestCase):
         xbmc.BUILTINS[:] = []
         try:
             xbmc.Player.playing = True
-            self.assertEqual(self.actions('?action=player'), ['home'])
+            self.assertEqual(self.actions('?action=player'), ['home', 'help'])
             self.assertIn('ActivateWindow(visualisation)', xbmc.BUILTINS)
 
             xbmc.Player.playing_video = True
@@ -78,7 +78,7 @@ class RouterSmokeTest(unittest.TestCase):
         xbmc.BUILTINS[:] = []
         try:
             xbmc.Player.playing = False
-            self.assertEqual(self.actions('?action=player'), ['home'])
+            self.assertEqual(self.actions('?action=player'), ['home', 'help'])
             self.assertEqual(xbmc.BUILTINS, [])
         finally:
             xbmc.Player.playing = had_music
